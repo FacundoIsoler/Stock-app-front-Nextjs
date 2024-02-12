@@ -1,14 +1,20 @@
 import { useEffect, useState } from "react";
 
-const initialState = { name: "", price: 0 }
+const initialProductState = { name: "", price: 0 }
+const initialMovementState = { type: "Compra", quantity: 0 }
 
 const baseURL = process.env.NEXT_PUBLIC_BACKEND_URL
 
 export default function Home() {
-  const [product, setProduct] = useState(initialState)
+  const [selectedProductId, setSelectedProductId] = useState()
+  const [product, setProduct] = useState(initialProductState)
+  const [movement, setMovement] = useState(initialMovementState)
   const [products, setProducts] = useState([])
 
-  const handleChange = (e) => {
+
+  //***********PRODUCT***********//
+
+  const handleProductChange = (e) => {
     e.preventDefault();
     const inputValue = e.target.value;
     const inputName = e.target.name;
@@ -17,7 +23,7 @@ export default function Home() {
     setProduct({ ...product, [inputName]: inputValue })
   }
 
-  const handleClick = async (e) => {
+  const handleCreateProduct = async (e) => {
     e.preventDefault();
     try {
       const res = await fetch(`${baseURL}/products`, {
@@ -28,10 +34,50 @@ export default function Home() {
         body: JSON.stringify(product)
       })
       const data = await res.json()
-      setProduct(initialState)
+      setProduct(initialProductState)
       const newProducts = [data.product, ...products]
       setProducts(newProducts)
       // fetchProducts()
+    } catch (error) {
+      console.log(error)
+    }
+
+  }
+
+
+
+  //***********MOVEMENT***********//
+  const handleMovementChange = (e) => {
+    e.preventDefault();
+    const inputValue = e.target.value;
+    setMovement({
+      ...movement,
+      quantity: +inputValue
+    })
+  }
+
+  const handleSelectType = (t) => {
+    setMovement({
+      ...movement,
+      type: t
+    })
+  }
+
+  const handleCreateMovement = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await fetch(`${baseURL}/products/movement/${selectedProductId}`, {
+        method: 'POST',
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(movement)
+      })
+      const data = await res.json()
+      console.log({ data })
+      setMovement(initialMovementState)
+      setSelectedProductId(null)
+      fetchProducts()
     } catch (error) {
       console.log(error)
     }
@@ -50,34 +96,74 @@ export default function Home() {
     fetchProducts()
   }, [])
 
+  // console.log({ products })
+
 
   return (
     <>
-      <div className="container df aic">
+      <div className="container df jcsb">
         <div className="df fdc">
           <h2 style={{ margin: "0.3rem" }}> Crear nuevo producto</h2>
           <form>
-            <input onChange={handleChange} type="text" className="onone" placeholder="Nombre del producto..." value={product.name} name="name" />
-            <input onChange={handleChange} type="number" className="onone" placeholder="Precio del producto..." value={product.price} name="price" />
-            <button onClick={handleClick} className="cursorp">Crear Producto</button>
+            <input onChange={handleProductChange} type="text" className="onone" placeholder="Nombre del producto..." value={product.name} name="name" />
+            <input onChange={handleProductChange} type="number" className="onone" placeholder="Precio del producto..." value={product.price} name="price" />
+            <button onClick={handleCreateProduct} className="cursorp">Crear Producto</button>
           </form>
+          <h2 style={{ margin: "0.3rem" }}> Crear movimiento stock</h2>
+          <div className="df aic mb5">
+            {
+              ['Compra', 'Venta'].map(t => (
+                <div
+                  onClick={() => handleSelectType(t)}
+                  className="mr5 p5 shadow br5 cursorp"
+                  key={t}
+                  style={{ backgroundColor: t === movement.type ? 'lightblue' : 'white' }}
+                >
+                  <span>
+                    {t}
+                  </span>
+                </div>
+              ))
+            }
+          </div>
+          <input
+            onChange={handleMovementChange}
+            type="number"
+            className="onone"
+            placeholder="Precio del producto..."
+            value={movement.quantity}
+            name="quantity" />
+          <button
+            onClick={handleCreateMovement}
+            className="cursorp">Crear movimeinto de stock</button>
         </div>
         <div className="products-container">
           {
             products?.map(p => (
-              <div className="product df aic jcsb p5 mb5 br5" key={p._id}>
+              <div
+                onClick={() => setSelectedProductId(p._id)}
+                className="shadow df aic jcsb p5 mb5 br5"
+                key={p._id}
+                style={{ backgroundColor: selectedProductId === p._id ? "lightblue" : "white" }}
+              >
                 <span>
                   {p.name}
                 </span>
-                <div className="df df">
-                  <span>${p.price}</span>
-                  <span style={{ color: "red", cursor: "pointer" }} onClick={() => {
+                <div className="df aic">
+                  <div className="df  fdc mr5 aic" style={{ width: "10rem" }}>
+                    <span className="mr5" >${p.price}</span>
+                    <div className="df jcsb">
+                      <span className="mr5">Stock: {p.stock}</span>
+                    </div>
+                  </div>
+                  <i className="fas fa-trash cursorp cred" onClick={() => {
                     fetch(`${baseURL}/products/${p._id}`, { method: "DELETE" })
-                    .then(res => res.json())
-                    .then(data => {
-                      console.log({data})
-                    })
-                  }}>X</span>
+                      .then(res => res.json())
+                      .then(data => {
+                        console.log({ data })
+                      })
+                  }}>
+                  </i>
                 </div>
               </div>
             ))
@@ -90,60 +176,14 @@ export default function Home() {
                       flex-direction:column;
                       width:20rem;
                       margin:0 auto;
-                    }
-
-                    .onone {
-                      outline: none;
-                    }
-
-                    .cursorp {
-                      cursor: pointer;
-                    }
+                  }
                     
-                    .df{
-                      display:flex;
-                    }
-
-                    .p5{
-                      padding0.5rem;
-                    }
-
-                    .br5{
-                      border-radius: 0.5rem;
-                    }
-
-                    .mb5{
-                      margin-bottom:1.5rem;
-                    }
-                    
-                    .product{
+                    .shadow{
                       box-shadow: .125rem .25rem .375rem rgba(0,0,0,0.2);
+
                     }
 
-                  .aic {
-                    align-items: center;
-                  }
-
-                  .jcc {
-                    justify-content: center;
-                  }
-                  
-                  .jcsb{
-                    justify-content: space-between;
-                  }
-
-                  .fdc{
-                    flex-direction:column;
-                  }
-                  
-                  input{
-                      margin-bottom:0.75rem;
-                      padding:0.5rem 0.5rem;
-                      border: 1px solid lightgray;
-                      border-radius: 0.5rem;
-                  }
-
-                  h1{
+                  h2{
                       text-align: center;
                   }
 
@@ -152,6 +192,7 @@ export default function Home() {
                     overflow-y: auto;
                     max-height: 20rem;
                     padding: 0.5rem;
+                    width: 100%;
                   }
 
                   .container {
@@ -161,13 +202,6 @@ export default function Home() {
                     margin-top: 5rem;
                     border-radius: 0.5rem;
                     padding: 1rem;
-                  }
-
-                  button {
-                    padding: 0.5rem 0.75rem;
-                    border-radius: 0.5rem;
-                    border: none;
-                    background-color: rgba();
                   }
           `}
         </style>

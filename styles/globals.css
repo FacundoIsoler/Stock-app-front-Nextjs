@@ -14,3 +14,65 @@ a {
 * {
   box-sizing: border-box;
 }
+
+.onone {
+  outline: none;
+}
+
+.cursorp {
+  cursor: pointer;
+}
+
+.df{
+  display:flex;
+}
+
+.p5{
+  padding: 0.5rem;
+}
+
+.br5{
+  border-radius: 0.5rem;
+}
+
+.mb5{
+  margin-bottom:0.5rem;
+}
+
+.mr5{
+  margin-right:0.5rem;
+}
+
+.cred{
+  color: rgba(214, 43, 43, 1);
+}
+
+.aic {
+  align-items: center;
+}
+
+.jcc {
+  justify-content: center;
+}
+
+.jcsb{
+  justify-content: space-between;
+}
+
+.fdc{
+  flex-direction:column;
+}
+
+input{
+    margin-bottom:0.75rem;
+    padding:0.5rem 0.5rem;
+    border: 1px solid lightgray;
+    border-radius: 0.5rem;
+}
+
+button {
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  border: none;
+  background-color: rgba();
+}
