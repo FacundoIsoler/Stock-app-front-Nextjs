@@ -1,15 +1,21 @@
 import { useEffect, useState } from "react";
+import { useSelector, useDispatch } from 'react-redux'
+import { fetchProducts} from '../store/slice.js'
 
 const initialProductState = { name: "", price: 0 }
 const initialMovementState = { type: "Compra", quantity: 0 }
+const initialActionUseEffect = false
 
 const baseURL = process.env.NEXT_PUBLIC_BACKEND_URL
 
 export default function Home() {
+
+  const products = useSelector((state) => state.counter.products.products)
+  const dispatch = useDispatch()
   const [selectedProductId, setSelectedProductId] = useState()
   const [product, setProduct] = useState(initialProductState)
   const [movement, setMovement] = useState(initialMovementState)
-  const [products, setProducts] = useState([])
+  const [actionUseEffect, setActionUseEffect] = useState(initialActionUseEffect)
 
 
   //***********PRODUCT***********//
@@ -35,8 +41,10 @@ export default function Home() {
       })
       const data = await res.json()
       setProduct(initialProductState)
-      const newProducts = [data.product, ...products]
-      setProducts(newProducts)
+      const products = [data.product, ...products]
+      // setProducts(newProducts)
+      setActionUseEffect(true)
+      setActionUseEffect(initialActionUseEffect)
       // fetchProducts()
     } catch (error) {
       console.log(error)
@@ -64,7 +72,6 @@ export default function Home() {
   }
 
   const handleCreateMovement = async (e) => {
-    e.preventDefault();
     try {
       const res = await fetch(`${baseURL}/products/movement/${selectedProductId}`, {
         method: 'POST',
@@ -74,27 +81,28 @@ export default function Home() {
         body: JSON.stringify(movement)
       })
       const data = await res.json()
-      console.log({ data })
       setMovement(initialMovementState)
       setSelectedProductId(null)
-      fetchProducts()
+      setActionUseEffect(false)
     } catch (error) {
       console.log(error)
     }
-
   }
 
-  const fetchProducts = () => {
-    fetch(`${baseURL}/products`)
-      .then(res => res.json())
-      .then(data => {
-        setProducts(data.products)
-      })
-  }
+
+  // const fetchProducts = () => {
+  //   fetch(`${baseURL}/products`)
+  //     .then(res => res.json())
+  //     .then(data => {
+  //       setProducts(data.products)
+  //     })
+  // }
 
   useEffect(() => {
-    fetchProducts()
-  }, [])
+    fetch(`${baseURL}/products`)
+      .then(res => res.json())
+      .then(data => dispatch(fetchProducts(data)))
+  }, [ actionUseEffect === false ])
 
   // console.log({ products })
 
@@ -105,12 +113,30 @@ export default function Home() {
         <div className="df fdc">
           <h2 style={{ margin: "0.3rem" }}> Crear nuevo producto</h2>
           <form>
-            <input onChange={handleProductChange} type="text" className="onone" placeholder="Nombre del producto..." value={product.name} name="name" />
-            <input onChange={handleProductChange} type="number" className="onone" placeholder="Precio del producto..." value={product.price} name="price" />
-            <button onClick={handleCreateProduct} className="cursorp">Crear Producto</button>
+            <input
+              onChange={handleProductChange}
+              type="text"
+              className="onone"
+              placeholder="Nombre del producto..."
+              value={product.name}
+              name="name"
+            />
+            <input
+              onChange={handleProductChange}
+              type="number"
+              className="onone"
+              placeholder="Precio del producto..."
+              value={product.price}
+              name="price"
+            />
+            <button
+              onClick={handleCreateProduct}
+              className="cursorp">
+              Crear Producto
+            </button>
           </form>
           <h2 style={{ margin: "0.3rem" }}> Crear movimiento stock</h2>
-          <div className="df aic mb5">
+          <div className="df aic mb5 jcsb">
             {
               ['Compra', 'Venta'].map(t => (
                 <div
@@ -134,10 +160,14 @@ export default function Home() {
             value={movement.quantity}
             name="quantity" />
           <button
-            onClick={handleCreateMovement}
+            onClick={() => {
+              handleCreateMovement()
+              setActionUseEffect(true)
+            }}
             className="cursorp">Crear movimeinto de stock</button>
         </div>
         <div className="products-container">
+
           {
             products?.map(p => (
               <div
